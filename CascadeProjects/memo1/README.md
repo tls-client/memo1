@@ -125,13 +125,3 @@ git clone [repository-url]
 ## ライセンス
 
 © 2024 オクシモロン. 全権利留保.
-
-## 連絡先
-
-- GitHub: https://github.com/tls-client
-- Discord: Oxymoron#1234
-- Email: contact@example.com
-
----
-
-*情熱とコードで構築* 🚀
