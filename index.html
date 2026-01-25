@@ -3,46 +3,67 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CEO生産性ダッシュボード</title>
+    <title>CEO生産性ダッシュボード Pro</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>🚀 CEO生産性ダッシュボード</h1>
-            <p class="subtitle">科学的アプローチで最高のパフォーマンスを実現</p>
+            <div class="header-content">
+                <div>
+                    <h1>⚡ CEO生産性ダッシュボード</h1>
+                    <p class="subtitle">データ駆動型パーソナル最適化システム</p>
+                </div>
+                <div class="header-stats">
+                    <div class="header-stat">
+                        <div class="stat-icon">●</div>
+                        <div>
+                            <div class="stat-value" id="productivityScore">--</div>
+                            <div class="stat-label">スコア</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </header>
         
         <div class="grid">
             <!-- 睡眠管理 -->
             <div class="card">
                 <div class="card-header">
-                    <span class="card-icon">😴</span>
-                    <h2 class="card-title">睡眠トラッキング</h2>
+                    <span class="card-icon">◐</span>
+                    <h2 class="card-title">睡眠管理</h2>
+                </div>
+                
+                <div class="sleep-input-section">
+                    <input type="time" id="bedTimeInput" placeholder="就寝時刻">
+                    <input type="time" id="wakeTimeInput" placeholder="起床時刻">
+                    <button class="btn btn-primary btn-small" id="updateSleepBtn">記録</button>
                 </div>
                 
                 <div class="sleep-record">
-                    <div class="sleep-label">今日の睡眠時間</div>
-                    <div class="sleep-hours" id="sleepHours">7.5</div>
+                    <div class="sleep-label">睡眠時間</div>
+                    <div class="sleep-hours" id="sleepHours">--</div>
                     <div class="sleep-label">時間</div>
+                    <div class="sleep-quality" id="sleepQualityText">上記の時刻を入力して記録してください</div>
                 </div>
                 
                 <div class="sleep-times">
                     <div class="time-box">
                         <div class="time-label">就寝</div>
-                        <div class="time-value" id="bedTime">23:00</div>
+                        <div class="time-value" id="bedTime">--:--</div>
                     </div>
                     <div class="time-box">
                         <div class="time-label">起床</div>
-                        <div class="time-value" id="wakeTime">06:30</div>
+                        <div class="time-value" id="wakeTime">--:--</div>
                     </div>
                 </div>
                 
                 <div class="recording-section">
-                    <strong style="display: block; margin-bottom: 10px; color: #92400e;">🎙️ いびき・呼吸分析</strong>
-                    <p style="color: #78350f; font-size: 0.95em; margin-bottom: 10px;">睡眠中の音声を録音して睡眠の質を分析します</p>
+                    <strong style="display: block; margin-bottom: 10px; color: #92400e;">● いびき・呼吸分析（AI音声解析）</strong>
+                    <p style="color: #78350f; font-size: 0.95em; margin-bottom: 10px;">音声を録音してリアルタイムAI分析します</p>
                     <button class="recording-btn btn-record" id="recordBtn">録音開始</button>
                     <div class="recording-status" id="recordingStatus"></div>
+                    <canvas id="audioVisualizer" width="400" height="100" style="width: 100%; margin-top: 10px; display: none; background: #000; border-radius: 8px;"></canvas>
                     <div id="audioAnalysis" style="margin-top: 15px; display: none;"></div>
                 </div>
             </div>
@@ -50,8 +71,8 @@
             <!-- 食事管理 -->
             <div class="card">
                 <div class="card-header">
-                    <span class="card-icon">🍽️</span>
-                    <h2 class="card-title">食事・栄養管理</h2>
+                    <span class="card-icon">▲</span>
+                    <h2 class="card-title">食事管理</h2>
                 </div>
                 
                 <div class="meal-input-section">
@@ -59,117 +80,27 @@
                     <button class="btn btn-primary" id="addMealBtn">追加</button>
                 </div>
                 
-                <button class="btn btn-camera" style="width: 100%; margin-bottom: 15px;" id="startCameraBtn">📷 カメラで撮影</button>
+                <button class="btn btn-camera" style="width: 100%; margin-bottom: 15px;" id="startCameraBtn">● カメラでAI分析</button>
                 
                 <div class="camera-preview" id="cameraPreview">
                     <video id="cameraVideo" autoplay playsinline></video>
-                    <img id="capturedImage" />
+                    <img id="capturedImage" alt="撮影画像"/>
+                    <canvas id="photoCanvas" style="display: none;"></canvas>
                     <div class="camera-controls">
-                        <button class="btn btn-primary" id="captureBtn" style="flex: 1;">撮影</button>
-                        <button class="btn btn-camera" id="analyzeBtn" style="flex: 1; display: none;">AI分析</button>
-                        <button class="btn btn-secondary" id="closeCameraBtn" style="flex: 1;">閉じる</button>
+                        <button class="btn btn-primary" id="captureBtn" style="flex: 1;">■ 撮影</button>
+                        <button class="btn btn-camera" id="analyzeBtn" style="flex: 1; display: none;">● AI分析</button>
+                        <button class="btn btn-secondary" id="closeCameraBtn" style="flex: 1;">✕ 閉じる</button>
+                    </div>
+                </div>
+                
+                <div class="nutrition-summary">
+                    <div class="daily-goal">
+                        <span>1日の目標達成率</span>
+                        <span id="nutritionGoal">0%</span>
                     </div>
                 </div>
                 
                 <div class="nutrition-grid">
                     <div class="nutrition-item">
                         <div class="nutrition-label">炭水化物</div>
-                        <div class="nutrition-value" id="carbs">0g</div>
-                    </div>
-                    <div class="nutrition-item">
-                        <div class="nutrition-label">タンパク質</div>
-                        <div class="nutrition-value" id="protein">0g</div>
-                    </div>
-                    <div class="nutrition-item">
-                        <div class="nutrition-label">脂質</div>
-                        <div class="nutrition-value" id="fat">0g</div>
-                    </div>
-                    <div class="nutrition-item">
-                        <div class="nutrition-label">ビタミン</div>
-                        <div class="nutrition-value" id="vitamins">0mg</div>
-                    </div>
-                    <div class="nutrition-item">
-                        <div class="nutrition-label">ミネラル</div>
-                        <div class="nutrition-value" id="minerals">0mg</div>
-                    </div>
-                    <div class="nutrition-item">
-                        <div class="nutrition-label">水分</div>
-                        <div class="nutrition-value" id="water">0ml</div>
-                    </div>
-                </div>
-                
-                <div class="meal-history">
-                    <div class="meal-history-title">本日の食事履歴</div>
-                    <div id="mealHistoryList">
-                        <p style="color: #94a3b8; text-align: center; padding: 20px;">まだ食事が記録されていません</p>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- 運動管理 -->
-            <div class="card">
-                <div class="card-header">
-                    <span class="card-icon">🏃</span>
-                    <h2 class="card-title">運動・活動量</h2>
-                </div>
-                
-                <div class="exercise-big-stat">
-                    <div class="big-number" id="steps">8,547</div>
-                    <div class="big-label">歩数</div>
-                </div>
-                
-                <div class="exercise-stats">
-                    <div class="stat-row">
-                        <span class="stat-label">消費カロリー</span>
-                        <span class="stat-value" id="calories">425 kcal</span>
-                    </div>
-                    <div class="stat-row">
-                        <span class="stat-label">移動距離</span>
-                        <span class="stat-value" id="distance">6.2 km</span>
-                    </div>
-                    <div class="stat-row">
-                        <span class="stat-label">アクティブ時間</span>
-                        <span class="stat-value" id="activeTime">1.5時間</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="grid">
-            <!-- タスク管理 -->
-            <div class="card">
-                <div class="card-header">
-                    <span class="card-icon">✅</span>
-                    <h2 class="card-title">タスク管理</h2>
-                </div>
-                
-                <div class="task-input-section">
-                    <input type="text" id="taskInput" placeholder="新しいタスクを入力...">
-                    <button class="btn btn-primary" id="addTaskBtn">追加</button>
-                </div>
-                
-                <ul class="task-list" id="taskList"></ul>
-            </div>
-            
-            <!-- AIニュース -->
-            <div class="card card-wide">
-                <div class="card-header">
-                    <span class="card-icon">🤖</span>
-                    <h2 class="card-title">最新AIニュース</h2>
-                </div>
-                
-                <div class="news-refresh">
-                    <button class="refresh-btn" id="refreshNewsBtn">🔄 更新</button>
-                    <div class="last-update" id="lastUpdate">最終更新: 読み込み中...</div>
-                </div>
-                
-                <div class="news-list" id="newsList">
-                    <div class="loading">ニュースを読み込み中...</div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <script src="script.js"></script>
-</body>
-</html>
+                        <div class="nutrition-value" id="carbs">
