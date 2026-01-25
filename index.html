@@ -103,4 +103,147 @@
                 <div class="nutrition-grid">
                     <div class="nutrition-item">
                         <div class="nutrition-label">炭水化物</div>
-                        <div class="nutrition-value" id="carbs">
+                        <div class="nutrition-value" id="carbs">0g</div>
+                        <div class="nutrition-goal">目標: 300g</div>
+                    </div>
+                    <div class="nutrition-item">
+                        <div class="nutrition-label">タンパク質</div>
+                        <div class="nutrition-value" id="protein">0g</div>
+                        <div class="nutrition-goal">目標: 80g</div>
+                    </div>
+                    <div class="nutrition-item">
+                        <div class="nutrition-label">脂質</div>
+                        <div class="nutrition-value" id="fat">0g</div>
+                        <div class="nutrition-goal">目標: 60g</div>
+                    </div>
+                    <div class="nutrition-item">
+                        <div class="nutrition-label">ビタミン</div>
+                        <div class="nutrition-value" id="vitamins">0mg</div>
+                        <div class="nutrition-goal">目標: 200mg</div>
+                    </div>
+                    <div class="nutrition-item">
+                        <div class="nutrition-label">ミネラル</div>
+                        <div class="nutrition-value" id="minerals">0mg</div>
+                        <div class="nutrition-goal">目標: 400mg</div>
+                    </div>
+                    <div class="nutrition-item">
+                        <div class="nutrition-label">水分</div>
+                        <div class="nutrition-value" id="water">0ml</div>
+                        <div class="nutrition-goal">目標: 2000ml</div>
+                    </div>
+                </div>
+                
+                <div class="meal-history">
+                    <div class="meal-history-header">
+                        <div class="meal-history-title">本日の食事履歴</div>
+                        <button class="btn-clear" id="clearMealsBtn">クリア</button>
+                    </div>
+                    <div id="mealHistoryList">
+                        <p style="color: #94a3b8; text-align: center; padding: 20px;">まだ食事が記録されていません</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 運動管理 -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-icon">►</span>
+                    <h2 class="card-title">運動管理</h2>
+                </div>
+                
+                <div class="exercise-manual">
+                    <input type="number" id="stepsInput" placeholder="歩数" min="0">
+                    <button class="btn btn-primary btn-small" id="updateStepsBtn">更新</button>
+                </div>
+                
+                <div class="exercise-big-stat">
+                    <div class="big-number" id="steps">0</div>
+                    <div class="big-label">歩数</div>
+                    <div class="goal-progress">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="stepsProgress" style="width: 0%"></div>
+                        </div>
+                        <span class="goal-text">目標: 10,000歩</span>
+                    </div>
+                </div>
+                
+                <div class="exercise-stats">
+                    <div class="stat-row">
+                        <span class="stat-label">消費カロリー</span>
+                        <span class="stat-value" id="calories">0 kcal</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">移動距離</span>
+                        <span class="stat-value" id="distance">0 km</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">アクティブ時間</span>
+                        <span class="stat-value" id="activeTime">0分</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="grid">
+            <!-- タスク管理 -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-icon">✓</span>
+                    <h2 class="card-title">タスク管理</h2>
+                    <div class="task-stats">
+                        <span id="taskProgress">0/0完了</span>
+                    </div>
+                </div>
+                
+                <div class="task-input-section">
+                    <input type="text" id="taskInput" placeholder="新しいタスクを入力...">
+                    <button class="btn btn-primary" id="addTaskBtn">追加</button>
+                </div>
+                
+                <div class="task-filter">
+                    <button class="filter-btn active" data-filter="all">全て</button>
+                    <button class="filter-btn" data-filter="active">未完了</button>
+                    <button class="filter-btn" data-filter="completed">完了</button>
+                </div>
+                
+                <ul class="task-list" id="taskList"></ul>
+            </div>
+            
+            <!-- AIニュース -->
+            <div class="card card-wide">
+                <div class="card-header">
+                    <span class="card-icon">■</span>
+                    <h2 class="card-title">最新AIニュース</h2>
+                </div>
+                
+                <div class="news-refresh">
+                    <button class="refresh-btn" id="refreshNewsBtn">↻ 更新</button>
+                    <div class="last-update" id="lastUpdate">最終更新: 読み込み中...</div>
+                </div>
+                
+                <div class="news-list" id="newsList">
+                    <div class="loading">ニュースを読み込み中...</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- AI健康アドバイス -->
+        <div class="card ai-advice-card">
+            <div class="card-header">
+                <span class="card-icon">◆</span>
+                <h2 class="card-title">AI健康アドバイス</h2>
+                <button class="btn btn-primary btn-small" id="getAdviceBtn">取得</button>
+            </div>
+            <div id="aiAdviceContent" class="ai-advice-content">
+                <p style="color: #64748b; text-align: center; padding: 40px;">「取得」ボタンを押すと、あなたの健康データを分析したパーソナライズされたアドバイスが表示されます</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="floating-save" id="floatingSave">
+        ● データ保存中...
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html>
