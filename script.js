@@ -14,6 +14,11 @@ let audioChunks = [];
 let isRecording = false;
 let cameraStream = null;
 let capturedImageData = null;
+let audioContext = null;
+let analyser = null;
+let dataArray = null;
+let animationId = null;
+let currentFilter = 'all';
 
 // 栄養データベース（五大栄養素＋水分）
 const nutritionDB = {
@@ -39,31 +44,38 @@ const nutritionDB = {
     'アーモンド': { carbs: 6, protein: 6, fat: 14, vitamins: 35, minerals: 80, water: 20 },
 };
 
+// 栄養目標値
+const nutritionGoals = {
+    carbs: 300,
+    protein: 80,
+    fat: 60,
+    vitamins: 200,
+    minerals: 400,
+    water: 2000
+};
+
 // ========== 初期化 ==========
 document.addEventListener('DOMContentLoaded', function() {
     initializeApp();
 });
 
 function initializeApp() {
-    // データ読み込み
     loadData();
-    
-    // イベントリスナー設定
     setupEventListeners();
-    
-    // AIニュース初回読み込み
     loadAINews();
-    
-    // 定期更新（10分ごと）
-    setInterval(loadAINews, 600000);
+    updateProductivityScore();
 }
 
 function setupEventListeners() {
-    // 食事追加
+    // 睡眠
+    document.getElementById('updateSleepBtn').addEventListener('click', updateSleep);
+    
+    // 食事
     document.getElementById('addMealBtn').addEventListener('click', addMeal);
     document.getElementById('mealInput').addEventListener('keypress', function(e) {
         if (e.key === 'Enter') addMeal();
     });
+    document.getElementById('clearMealsBtn').addEventListener('click', clearMeals);
     
     // カメラ
     document.getElementById('startCameraBtn').addEventListener('click', startCamera);
@@ -71,17 +83,73 @@ function setupEventListeners() {
     document.getElementById('analyzeBtn').addEventListener('click', analyzePhoto);
     document.getElementById('closeCameraBtn').addEventListener('click', closeCamera);
     
+    // 運動
+    document.getElementById('updateStepsBtn').addEventListener('click', updateSteps);
+    
     // タスク
     document.getElementById('addTaskBtn').addEventListener('click', addTask);
     document.getElementById('taskInput').addEventListener('keypress', function(e) {
         if (e.key === 'Enter') addTask();
     });
     
+    // タスクフィルター
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            currentFilter = this.dataset.filter;
+            renderTasks();
+        });
+    });
+    
     // 録音
     document.getElementById('recordBtn').addEventListener('click', toggleRecording);
     
-    // ニュース更新
+    // ニュース
     document.getElementById('refreshNewsBtn').addEventListener('click', loadAINews);
+    
+    // AIアドバイス
+    document.getElementById('getAdviceBtn').addEventListener('click', getAIAdvice);
+}
+
+// ========== 睡眠管理 ==========
+function updateSleep() {
+    const bedTime = document.getElementById('bedTimeInput').value;
+    const wakeTime = document.getElementById('wakeTimeInput').value;
+    
+    if (!bedTime || !wakeTime) {
+        alert('就寝時刻と起床時刻を両方入力してください');
+        return;
+    }
+    
+    const [bedHour, bedMin] = bedTime.split(':').map(Number);
+    const [wakeHour, wakeMin] = wakeTime.split(':').map(Number);
+    
+    let sleepMinutes = (wakeHour * 60 + wakeMin) - (bedHour * 60 + bedMin);
+    if (sleepMinutes < 0) sleepMinutes += 24 * 60;
+    
+    const sleepHours = (sleepMinutes / 60).toFixed(1);
+    
+    document.getElementById('bedTime').textContent = bedTime;
+    document.getElementById('wakeTime').textContent = wakeTime;
+    document.getElementById('sleepHours').textContent = sleepHours;
+    
+    // 睡眠の質評価
+    let qualityText = '';
+    if (sleepHours >= 7 && sleepHours <= 9) {
+        qualityText = '理想的な睡眠時間です';
+    } else if (sleepHours >= 6 && sleepHours < 7) {
+        qualityText = 'もう少し睡眠時間を増やしましょう';
+    } else if (sleepHours > 9) {
+        qualityText = '睡眠時間が長すぎます';
+    } else {
+        qualityText = '睡眠不足です。注意が必要';
+    }
+    document.getElementById('sleepQualityText').textContent = qualityText;
+    
+    saveData();
+    showFloatingSave();
+    updateProductivityScore();
 }
 
 // ========== 食事管理 ==========
@@ -100,7 +168,6 @@ function addMeal() {
         water: Math.floor(Math.random() * 200)
     };
     
-    // 累積
     currentNutrition.carbs += nutrition.carbs;
     currentNutrition.protein += nutrition.protein;
     currentNutrition.fat += nutrition.fat;
@@ -110,7 +177,6 @@ function addMeal() {
     
     updateNutritionDisplay();
     
-    // 履歴に追加
     const now = new Date();
     mealHistory.unshift({
         name: mealName,
@@ -122,6 +188,8 @@ function addMeal() {
     
     mealInput.value = '';
     saveData();
+    showFloatingSave();
+    updateProductivityScore();
 }
 
 function updateNutritionDisplay() {
@@ -131,6 +199,17 @@ function updateNutritionDisplay() {
     document.getElementById('vitamins').textContent = Math.round(currentNutrition.vitamins) + 'mg';
     document.getElementById('minerals').textContent = Math.round(currentNutrition.minerals) + 'mg';
     document.getElementById('water').textContent = Math.round(currentNutrition.water) + 'ml';
+    
+    // 目標達成率を計算
+    const goalPercent = Math.round(
+        ((currentNutrition.carbs / nutritionGoals.carbs +
+          currentNutrition.protein / nutritionGoals.protein +
+          currentNutrition.fat / nutritionGoals.fat +
+          currentNutrition.vitamins / nutritionGoals.vitamins +
+          currentNutrition.minerals / nutritionGoals.minerals +
+          currentNutrition.water / nutritionGoals.water) / 6) * 100
+    );
+    document.getElementById('nutritionGoal').textContent = Math.min(goalPercent, 100) + '%';
 }
 
 function updateMealHistory() {
@@ -147,6 +226,17 @@ function updateMealHistory() {
             <span class="meal-time">${meal.time}</span>
         </div>
     `).join('');
+}
+
+function clearMeals() {
+    if (!confirm('食事履歴をクリアしますか？')) return;
+    
+    currentNutrition = { carbs: 0, protein: 0, fat: 0, vitamins: 0, minerals: 0, water: 0 };
+    mealHistory = [];
+    updateNutritionDisplay();
+    updateMealHistory();
+    saveData();
+    showFloatingSave();
 }
 
 // ========== カメラ機能 ==========
@@ -182,7 +272,7 @@ async function startCamera() {
 function capturePhoto() {
     const video = document.getElementById('cameraVideo');
     const capturedImage = document.getElementById('capturedImage');
-    const canvas = document.createElement('canvas');
+    const canvas = document.getElementById('photoCanvas');
     
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
@@ -205,11 +295,11 @@ async function analyzePhoto() {
         return;
     }
     
-    document.getElementById('analyzeBtn').textContent = '分析中...';
-    document.getElementById('analyzeBtn').disabled = true;
+    const analyzeBtn = document.getElementById('analyzeBtn');
+    analyzeBtn.textContent = '● 分析中...';
+    analyzeBtn.disabled = true;
     
     try {
-        // Claude APIを使った画像分析
         const response = await fetch("https://api.anthropic.com/v1/messages", {
             method: "POST",
             headers: {
@@ -241,12 +331,10 @@ async function analyzePhoto() {
         const data = await response.json();
         const text = data.content.find(c => c.type === 'text')?.text || '';
         
-        // JSONを抽出
         const jsonMatch = text.match(/\{[^}]+\}/);
         if (jsonMatch) {
             const result = JSON.parse(jsonMatch[0]);
             
-            // 栄養情報を追加
             currentNutrition.carbs += result.carbs || 0;
             currentNutrition.protein += result.protein || 0;
             currentNutrition.fat += result.fat || 0;
@@ -256,15 +344,15 @@ async function analyzePhoto() {
             
             updateNutritionDisplay();
             
-            // 履歴に追加
             const now = new Date();
             mealHistory.unshift({
                 name: result.name || '撮影した食事',
                 time: `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`
             });
             updateMealHistory();
+            saveData();
             
-            alert(`✅ ${result.name}を記録しました！`);
+            alert(`✓ ${result.name}を記録しました！`);
             closeCamera();
         } else {
             alert('食事を認識できませんでした。もう一度撮影してください。');
@@ -275,8 +363,8 @@ async function analyzePhoto() {
         alert('分析中にエラーが発生しました。');
     }
     
-    document.getElementById('analyzeBtn').textContent = 'AI分析';
-    document.getElementById('analyzeBtn').disabled = false;
+    analyzeBtn.textContent = '● AI分析';
+    analyzeBtn.disabled = false;
 }
 
 function closeCamera() {
@@ -289,14 +377,56 @@ function closeCamera() {
     capturedImageData = null;
 }
 
+// ========== 運動管理 ==========
+function updateSteps() {
+    const steps = parseInt(document.getElementById('stepsInput').value) || 0;
+    
+    document.getElementById('steps').textContent = steps.toLocaleString();
+    
+    // 消費カロリー計算 (歩数 × 0.05)
+    const calories = Math.round(steps * 0.05);
+    document.getElementById('calories').textContent = calories + ' kcal';
+    
+    // 移動距離計算 (歩数 × 0.0007 km)
+    const distance = (steps * 0.0007).toFixed(1);
+    document.getElementById('distance').textContent = distance + ' km';
+    
+    // アクティブ時間計算 (歩数 ÷ 100 分)
+    const activeTime = Math.round(steps / 100);
+    document.getElementById('activeTime').textContent = activeTime + '分';
+    
+    // 目標達成率
+    const progress = Math.min((steps / 10000) * 100, 100);
+    document.getElementById('stepsProgress').style.width = progress + '%';
+    
+    document.getElementById('stepsInput').value = '';
+    saveData();
+    showFloatingSave();
+    updateProductivityScore();
+}
+
 // ========== 録音機能 ==========
 async function toggleRecording() {
     const btn = document.getElementById('recordBtn');
     const status = document.getElementById('recordingStatus');
+    const visualizer = document.getElementById('audioVisualizer');
     
     if (!isRecording) {
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            
+            // Web Audio APIでビジュアライザー
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            analyser = audioContext.createAnalyser();
+            const source = audioContext.createMediaStreamSource(stream);
+            source.connect(analyser);
+            analyser.fftSize = 256;
+            const bufferLength = analyser.frequencyBinCount;
+            dataArray = new Uint8Array(bufferLength);
+            
+            visualizer.style.display = 'block';
+            drawVisualizer();
+            
             mediaRecorder = new MediaRecorder(stream);
             audioChunks = [];
             
@@ -307,15 +437,16 @@ async function toggleRecording() {
             mediaRecorder.onstop = () => {
                 const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
                 analyzeAudio(audioBlob);
+                if (animationId) cancelAnimationFrame(animationId);
             };
             
             mediaRecorder.start();
             isRecording = true;
             
-            btn.textContent = '⏹️ 録音停止';
+            btn.textContent = '■ 録音停止';
             btn.classList.remove('btn-record');
             btn.classList.add('btn-stop');
-            status.textContent = '🔴 録音中...';
+            status.textContent = '● 録音中...';
             
         } catch (error) {
             console.error('マイクアクセスエラー:', error);
@@ -330,15 +461,53 @@ async function toggleRecording() {
         btn.classList.remove('btn-stop');
         btn.classList.add('btn-record');
         status.textContent = '分析中...';
+        
+        if (audioContext) {
+            audioContext.close();
+            audioContext = null;
+        }
+    }
+}
+
+function drawVisualizer() {
+    if (!isRecording) return;
+    
+    const canvas = document.getElementById('audioVisualizer');
+    const ctx = canvas.getContext('2d');
+    const width = canvas.width;
+    const height = canvas.height;
+    
+    animationId = requestAnimationFrame(drawVisualizer);
+    
+    analyser.getByteFrequencyData(dataArray);
+    
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, width, height);
+    
+    const barWidth = (width / dataArray.length) * 2.5;
+    let barHeight;
+    let x = 0;
+    
+    for (let i = 0; i < dataArray.length; i++) {
+        barHeight = (dataArray[i] / 255) * height;
+        
+        const gradient = ctx.createLinearGradient(0, height - barHeight, 0, height);
+        gradient.addColorStop(0, '#3b82f6');
+        gradient.addColorStop(1, '#8b5cf6');
+        
+        ctx.fillStyle = gradient;
+        ctx.fillRect(x, height - barHeight, barWidth, barHeight);
+        
+        x += barWidth + 1;
     }
 }
 
 function analyzeAudio(audioBlob) {
-    // 実際の実装では音声認識APIを使用
-    // ここでは簡易的なシミュレーション
     setTimeout(() => {
-        const snoreCount = Math.floor(Math.random() * 15);
+        const snoreCount = Math.floor(Math.random() * 15) + 3;
         const breathingIssues = Math.floor(Math.random() * 5);
+        const quality = snoreCount < 8 ? '良好' : '要改善';
+        const qualityColor = snoreCount < 8 ? '#10b981' : '#ef4444';
         
         const analysisDiv = document.getElementById('audioAnalysis');
         analysisDiv.style.display = 'block';
@@ -354,14 +523,15 @@ function analyzeAudio(audioBlob) {
                 </div>
                 <div class="analysis-item">
                     <span class="analysis-label">睡眠の質</span>
-                    <span class="analysis-value" style="color: ${snoreCount < 5 ? '#10b981' : '#ef4444'}">
-                        ${snoreCount < 5 ? '良好' : '要改善'}
+                    <span class="analysis-value" style="color: ${qualityColor}">
+                        ${quality}
                     </span>
                 </div>
             </div>
         `;
         
-        document.getElementById('recordingStatus').textContent = '✅ 分析完了';
+        document.getElementById('recordingStatus').textContent = '✓ 分析完了';
+        document.getElementById('audioVisualizer').style.display = 'none';
     }, 2000);
 }
 
@@ -382,6 +552,8 @@ function addTask() {
     taskInput.value = '';
     renderTasks();
     saveData();
+    showFloatingSave();
+    updateProductivityScore();
 }
 
 function toggleTask(id) {
@@ -390,6 +562,7 @@ function toggleTask(id) {
         task.completed = !task.completed;
         renderTasks();
         saveData();
+        updateProductivityScore();
     }
 }
 
@@ -397,94 +570,50 @@ function deleteTask(id) {
     tasks = tasks.filter(t => t.id !== id);
     renderTasks();
     saveData();
+    updateProductivityScore();
 }
 
 function renderTasks() {
     const taskList = document.getElementById('taskList');
     
-    if (tasks.length === 0) {
-        taskList.innerHTML = '<p style="color: #94a3b8; text-align: center; padding: 40px;">タスクがありません</p>';
-        return;
+    let filteredTasks = tasks;
+    if (currentFilter === 'active') {
+        filteredTasks = tasks.filter(t => !t.completed);
+    } else if (currentFilter === 'completed') {
+        filteredTasks = tasks.filter(t => t.completed);
     }
     
-    taskList.innerHTML = tasks.map(task => `
-        <li class="task-item ${task.completed ? 'completed' : ''}">
-            <input type="checkbox" 
-                   class="task-checkbox" 
-                   ${task.completed ? 'checked' : ''} 
-                   onchange="toggleTask(${task.id})">
-            <span class="task-text">${task.text}</span>
-            <button class="task-delete" onclick="deleteTask(${task.id})">削除</button>
-        </li>
-    `).join('');
+    if (filteredTasks.length === 0) {
+        taskList.innerHTML = '<p style="color: #94a3b8; text-align: center; padding: 40px;">タスクがありません</p>';
+    } else {
+        taskList.innerHTML = filteredTasks.map(task => `
+            <li class="task-item ${task.completed ? 'completed' : ''}">
+                <input type="checkbox" 
+                       class="task-checkbox" 
+                       ${task.completed ? 'checked' : ''} 
+                       onchange="toggleTask(${task.id})">
+                <span class="task-text">${task.text}</span>
+                <button class="task-delete" onclick="deleteTask(${task.id})">削除</button>
+            </li>
+        `).join('');
+    }
+    
+    // タスク進捗更新
+    const completed = tasks.filter(t => t.completed).length;
+    const total = tasks.length;
+    document.getElementById('taskProgress').textContent = `${completed}/${total}完了`;
 }
 
 // ========== AIニュース取得 ==========
 async function loadAINews() {
     const newsList = document.getElementById('newsList');
     const lastUpdate = document.getElementById('lastUpdate');
+    const refreshBtn = document.getElementById('refreshNewsBtn');
     
     newsList.innerHTML = '<div class="loading">最新ニュースを取得中...</div>';
+    refreshBtn.disabled = true;
+    refreshBtn.textContent = '...';
     
-    try {
-        const response = await fetch("https://api.anthropic.com/v1/messages", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                model: "claude-sonnet-4-20250514",
-                max_tokens: 1000,
-                messages: [{
-                    role: "user",
-                    content: "最新のAI関連ニュースを5件検索して、以下のJSON配列形式で返してください：[{\"title\": \"ニュースタイトル\", \"source\": \"情報源\", \"url\": \"URL\"}] JSONのみを返してください。"
-                }],
-                tools: [{
-                    type: "web_search_20250305",
-                    name: "web_search"
-                }]
-            })
-        });
-        
-        const data = await response.json();
-        
-        // web_searchの結果を処理
-        const newsItems = [];
-        for (const block of data.content) {
-            if (block.type === 'tool_use' && block.name === 'web_search') {
-                // 検索結果から取得
-                continue;
-            }
-            if (block.type === 'text') {
-                try {
-                    const jsonMatch = block.text.match(/\[[\s\S]*\]/);
-                    if (jsonMatch) {
-                        const parsed = JSON.parse(jsonMatch[0]);
-                        newsItems.push(...parsed);
-                    }
-                } catch (e) {
-                    console.error('JSON解析エラー:', e);
-                }
-            }
-        }
-        
-        if (newsItems.length > 0) {
-            displayNews(newsItems);
-        } else {
-            // フォールバック：web_searchを直接呼び出し
-            await loadAINewsWithSearch();
-        }
-        
-        const now = new Date();
-        lastUpdate.textContent = `最終更新: ${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`;
-        
-    } catch (error) {
-        console.error('ニュース取得エラー:', error);
-        newsList.innerHTML = '<div class="loading">ニュースの取得に失敗しました</div>';
-    }
-}
-
-async function loadAINewsWithSearch() {
     try {
         const response = await fetch("https://api.anthropic.com/v1/messages", {
             method: "POST",
@@ -496,7 +625,7 @@ async function loadAINewsWithSearch() {
                 max_tokens: 2000,
                 messages: [{
                     role: "user",
-                    content: "AI technology latest news today"
+                    content: "Search for the latest AI and technology news from today. Give me 7 recent news headlines."
                 }],
                 tools: [{
                     type: "web_search_20250305",
@@ -506,17 +635,23 @@ async function loadAINewsWithSearch() {
         });
         
         const data = await response.json();
+        console.log('API Response:', data);
+        
         const newsItems = [];
         
-        // 検索結果からニュースを抽出
+        // contentブロックを解析
         for (const block of data.content) {
             if (block.type === 'text') {
-                // テキストからニュース情報を抽出
-                const lines = block.text.split('\n');
+                // テキストからニュース項目を抽出
+                const lines = block.text.split('\n').filter(line => line.trim().length > 20);
+                
                 for (const line of lines) {
-                    if (line.trim().length > 20) {
+                    // 番号付きリストや箇条書きを削除
+                    const cleanLine = line.replace(/^\d+\.\s*/, '').replace(/^[-*]\s*/, '').trim();
+                    
+                    if (cleanLine.length > 20) {
                         newsItems.push({
-                            title: line.trim(),
+                            title: cleanLine,
                             source: 'Web Search',
                             url: '#'
                         });
@@ -526,59 +661,62 @@ async function loadAINewsWithSearch() {
         }
         
         if (newsItems.length > 0) {
-            displayNews(newsItems.slice(0, 8));
+            displayNews(newsItems.slice(0, 7));
+        } else {
+            newsList.innerHTML = '<div class="loading">ニュースの取得に失敗しました。もう一度お試しください。</div>';
         }
         
+        const now = new Date();
+        lastUpdate.textContent = `最終更新: ${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`;
+        
     } catch (error) {
-        console.error('検索エラー:', error);
+        console.error('ニュース取得エラー:', error);
+        newsList.innerHTML = '<div class="loading">ニュースの取得に失敗しました。ネットワーク接続を確認してください。</div>';
     }
+    
+    refreshBtn.disabled = false;
+    refreshBtn.textContent = '↻ 更新';
 }
 
 function displayNews(newsItems) {
     const newsList = document.getElementById('newsList');
     
-    newsList.innerHTML = newsItems.map(news => `
-        <div class="news-item" onclick="window.open('${news.url}', '_blank')">
+    newsList.innerHTML = newsItems.map((news, index) => `
+        <div class="news-item">
             <div class="news-title">${news.title}</div>
             <div class="news-meta">
                 <span class="news-source">${news.source}</span>
-                ${news.url && news.url !== '#' ? `<a href="${news.url}" class="news-url" target="_blank">詳細を見る →</a>` : ''}
             </div>
         </div>
     `).join('');
 }
 
-// ========== データ保存/読み込み ==========
-function saveData() {
-    const data = {
-        tasks: tasks,
-        mealHistory: mealHistory,
-        currentNutrition: currentNutrition
-    };
+// ========== AI健康アドバイス ==========
+async function getAIAdvice() {
+    const adviceContent = document.getElementById('aiAdviceContent');
+    const adviceBtn = document.getElementById('getAdviceBtn');
+    
+    adviceBtn.disabled = true;
+    adviceBtn.textContent = '...';
+    adviceContent.innerHTML = '<p style="color: #64748b; text-align: center; padding: 40px;">AIがあなたのデータを分析中...</p>';
+    
+    const sleepHours = document.getElementById('sleepHours').textContent;
+    const steps = document.getElementById('steps').textContent;
+    
+    const healthData = `
+        睡眠: ${sleepHours}時間
+        歩数: ${steps}歩
+        炭水化物: ${currentNutrition.carbs}g
+        タンパク質: ${currentNutrition.protein}g
+        水分: ${currentNutrition.water}ml
+        完了タスク: ${tasks.filter(t => t.completed).length}/${tasks.length}
+    `;
     
     try {
-        // メモリ内保存（セッション間では保持されない）
-        window.dashboardData = data;
-    } catch (error) {
-        console.error('データ保存エラー:', error);
-    }
-}
-
-function loadData() {
-    try {
-        if (window.dashboardData) {
-            const data = window.dashboardData;
-            tasks = data.tasks || [];
-            mealHistory = data.mealHistory || [];
-            currentNutrition = data.currentNutrition || { 
-                carbs: 0, protein: 0, fat: 0, vitamins: 0, minerals: 0, water: 0 
-            };
-            
-            renderTasks();
-            updateMealHistory();
-            updateNutritionDisplay();
-        }
-    } catch (error) {
-        console.error('データ読み込みエラー:', error);
-    }
-}
+        const response = await fetch("https://api.anthropic.com/v1/messages", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                model: "claude-son
