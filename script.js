@@ -381,30 +381,84 @@ function deleteTask(taskId) {
 }
 
 async function refreshNews() {
-    // Simulate AI news fetching
-    const mockNews = [
-        {
-            title: 'AIがビジネス戦略を革新：最新の動向',
-            description: '人工知能が企業の意思決定プロセスをどのように変革しているか',
-            url: '#',
-            publishedAt: new Date().toISOString()
-        },
-        {
-            title: '生産性向上のためのAIツールトップ10',
-            description: 'CEOが必ず知っておくべき最新のAI生産性ツール',
-            url: '#',
-            publishedAt: new Date().toISOString()
-        },
-        {
-            title: '健康経営とAIテクノロジーの融合',
-            description: '従業員の健康をAIで管理する新しいアプローチ',
-            url: '#',
-            publishedAt: new Date().toISOString()
+    try {
+        // Fetch real AI news from RSS feeds
+        const newsSources = [
+            'https://rss.cnn.com/rss/edition.rss',
+            'https://feeds.bbci.co.uk/news/rss.xml',
+            'https://www.nasa.gov/rss/dyn/breaking_news.rss'
+        ];
+        
+        const newsPromises = newsSources.map(async (source) => {
+            try {
+                const response = await fetch(`https://api.rss2json.com/api.json?rss_url=${encodeURIComponent(source)}`);
+                const data = await response.json();
+                
+                if (data.status === 'ok' && data.items) {
+                    return data.items.slice(0, 2).map(item => ({
+                        title: item.title,
+                        description: item.description || item.contentSnippet || '',
+                        url: item.link || item.guid,
+                        publishedAt: item.pubDate || new Date().toISOString()
+                    }));
+                }
+                return [];
+            } catch (error) {
+                console.error('Error fetching news from', source, error);
+                return [];
+            }
+        });
+        
+        const newsResults = await Promise.all(newsPromises);
+        newsArticles = newsResults.flat();
+        
+        // Filter for AI/tech related news
+        newsArticles = newsArticles.filter(article => 
+            article.title.toLowerCase().includes('ai') ||
+            article.title.toLowerCase().includes('artificial') ||
+            article.title.toLowerCase().includes('technology') ||
+            article.title.toLowerCase().includes('tech') ||
+            article.description.toLowerCase().includes('ai') ||
+            article.description.toLowerCase().includes('artificial')
+        ).slice(0, 6);
+        
+        // If no AI news found, keep some general tech news
+        if (newsArticles.length === 0) {
+            newsArticles = newsResults.flat().slice(0, 6);
         }
-    ];
-    
-    newsArticles = mockNews;
-    displayNews();
+        
+        displayNews();
+        
+        // Auto-refresh every 30 minutes
+        setTimeout(refreshNews, 30 * 60 * 1000);
+        
+    } catch (error) {
+        console.error('Error refreshing news:', error);
+        // Fallback to mock news if API fails
+        const mockNews = [
+            {
+                title: 'AIがビジネス戦略を革新：最新の動向',
+                description: '人工知能が企業の意思決定プロセスをどのように変革しているか',
+                url: '#',
+                publishedAt: new Date().toISOString()
+            },
+            {
+                title: '生産性向上のためのAIツールトップ10',
+                description: 'CEOが必ず知っておくべき最新のAI生産性ツール',
+                url: '#',
+                publishedAt: new Date().toISOString()
+            },
+            {
+                title: '健康経営とAIテクノロジーの融合',
+                description: '従業員の健康をAIで管理する新しいアプローチ',
+                url: '#',
+                publishedAt: new Date().toISOString()
+            }
+        ];
+        
+        newsArticles = mockNews;
+        displayNews();
+    }
 }
 
 function displayNews() {
@@ -508,10 +562,24 @@ function updateDashboardStats() {
     // Calculate today's stats
     const today = new Date().toDateString();
     
-    // Sleep stats
+    // Sleep stats - remove hardcoded values
     const todaySleep = sleepData.find(sleep => 
         new Date(sleep.date).toDateString() === today
     );
+    
+    const sleepHours = todaySleep ? todaySleep.totalHours : '--';
+    const sleepQuality = todaySleep ? todaySleep.quality : '--';
+    
+    // Update sleep card
+    const sleepCard = document.querySelector('.grid .glass-effect');
+    if (sleepCard && todaySleep) {
+        sleepCard.querySelector('.text-3xl').textContent = sleepHours + 'h';
+        sleepCard.querySelector('.text-sm.opacity-80').textContent = `睡眠品質: ${sleepQuality}%`;
+        const progressBar = sleepCard.querySelector('.bg-green-400');
+        if (progressBar) {
+            progressBar.style.width = sleepQuality + '%';
+        }
+    }
     
     // Nutrition stats
     const todayNutrition = nutritionData.filter(meal => 
@@ -522,22 +590,63 @@ function updateDashboardStats() {
         sum + meal.nutrition.calories, 0
     );
     
+    // Update nutrition card
+    const nutritionCards = document.querySelectorAll('.grid .glass-effect');
+    if (nutritionCards[1]) {
+        nutritionCards[1].querySelector('.text-3xl').textContent = totalCalories.toLocaleString();
+        const calorieProgress = Math.min((totalCalories / 2500) * 100, 100);
+        const progressBar = nutritionCards[1].querySelector('.bg-blue-400');
+        if (progressBar) {
+            progressBar.style.width = calorieProgress + '%';
+        }
+    }
+    
     // Exercise stats
     const todayExercise = exerciseData.find(exercise => 
         new Date(exercise.date).toDateString() === today
     );
     
+    // Update exercise card
+    if (nutritionCards[2] && todayExercise) {
+        nutritionCards[2].querySelector('.text-3xl').textContent = todayExercise.steps.toLocaleString();
+        const stepProgress = Math.min((todayExercise.steps / 10000) * 100, 100);
+        const progressBar = nutritionCards[2].querySelector('.bg-orange-400');
+        if (progressBar) {
+            progressBar.style.width = stepProgress + '%';
+        }
+    }
+    
     // Task stats
     const completedTasks = tasks.filter(task => task.status === 'done').length;
     const totalTasks = tasks.length;
     
-    // Update dashboard cards (would update the actual DOM elements)
-    console.log('Dashboard stats updated:', {
-        sleep: todaySleep,
-        calories: totalCalories,
-        exercise: todayExercise,
-        tasks: `${completedTasks}/${totalTasks}`
-    });
+    // Update task card
+    if (nutritionCards[3]) {
+        nutritionCards[3].querySelector('.text-3xl').textContent = `${completedTasks}/${totalTasks}`;
+        const taskProgress = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
+        const progressBar = nutritionCards[3].querySelector('.bg-purple-400');
+        if (progressBar) {
+            progressBar.style.width = taskProgress + '%';
+        }
+    }
+    
+    // Update summary section
+    const summarySection = document.querySelector('.grid .glass-effect .space-y-3');
+    if (summarySection) {
+        const summaryItems = summarySection.querySelectorAll('.flex');
+        if (summaryItems[0]) {
+            summaryItems[0].querySelector('.font-bold').textContent = todaySleep ? `${sleepQuality}/100` : '--/100';
+        }
+        if (summaryItems[2]) {
+            const activityLevel = todayExercise ? 
+                (todayExercise.steps > 8000 ? '高' : todayExercise.steps > 5000 ? '中' : '低') : '--';
+            summaryItems[2].querySelector('.font-bold').textContent = activityLevel;
+        }
+        if (summaryItems[3]) {
+            const productivity = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+            summaryItems[3].querySelector('.font-bold').textContent = productivity + '%';
+        }
+    }
 }
 
 function initializeCharts() {
