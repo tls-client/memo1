@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CEO Productivity Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .progress-ring {
+            transform: rotate(-90deg);
+        }
+        .tab-active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen text-white">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <header class="mb-8 text-center">
+            <h1 class="text-4xl font-bold mb-2">CEO Productivity Dashboard</h1>
+            <p class="text-xl opacity-90">健康・生産性・タスク管理の統合プラットフォーム</p>
+        </header>
+
+        <!-- Main Navigation -->
+        <nav class="mb-8">
+            <div class="flex flex-wrap justify-center gap-2">
+                <button onclick="showTab('dashboard')" class="tab-btn px-6 py-3 rounded-lg glass-effect hover:bg-white hover:bg-opacity-20 transition tab-active" data-tab="dashboard">
+                    <i class="fas fa-tachometer-alt mr-2"></i>ダッシュボード
+                </button>
+                <button onclick="showTab('sleep')" class="tab-btn px-6 py-3 rounded-lg glass-effect hover:bg-white hover:bg-opacity-20 transition" data-tab="sleep">
+                    <i class="fas fa-bed mr-2"></i>睡眠管理
+                </button>
+                <button onclick="showTab('meal')" class="tab-btn px-6 py-3 rounded-lg glass-effect hover:bg-white hover:bg-opacity-20 transition" data-tab="meal">
+                    <i class="fas fa-utensils mr-2"></i>食事管理
+                </button>
+                <button onclick="showTab('exercise')" class="tab-btn px-6 py-3 rounded-lg glass-effect hover:bg-white hover:bg-opacity-20 transition" data-tab="exercise">
+                    <i class="fas fa-running mr-2"></i>運動管理
+                </button>
+                <button onclick="showTab('tasks')" class="tab-btn px-6 py-3 rounded-lg glass-effect hover:bg-white hover:bg-opacity-20 transition" data-tab="tasks">
+                    <i class="fas fa-tasks mr-2"></i>タスク管理
+                </button>
+                <button onclick="showTab('news')" class="tab-btn px-6 py-3 rounded-lg glass-effect hover:bg-white hover:bg-opacity-20 transition" data-tab="news">
+                    <i class="fas fa-newspaper mr-2"></i>AIニュース
+                </button>
+                <button onclick="showTab('logs')" class="tab-btn px-6 py-3 rounded-lg glass-effect hover:bg-white hover:bg-opacity-20 transition" data-tab="logs">
+                    <i class="fas fa-chart-line mr-2"></i>ログ
+                </button>
+            </div>
+        </nav>
+
+        <!-- Dashboard Tab -->
+        <div id="dashboard" class="tab-content">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <!-- Sleep Card -->
+                <div class="glass-effect rounded-xl p-6 card-hover">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold">睡眠</h3>
+                        <i class="fas fa-bed text-2xl opacity-70"></i>
+                    </div>
+                    <div class="text-3xl font-bold mb-2">7.5h</div>
+                    <div class="text-sm opacity-80">睡眠品質: 85%</div>
+                    <div class="w-full bg-white bg-opacity-20 rounded-full h-2 mt-2">
+                        <div class="bg-green-400 h-2 rounded-full" style="width: 85%"></div>
+                    </div>
+                </div>
+
+                <!-- Meals Card -->
+                <div class="glass-effect rounded-xl p-6 card-hover">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold">栄養</h3>
+                        <i class="fas fa-apple-alt text-2xl opacity-70"></i>
+                    </div>
+                    <div class="text-3xl font-bold mb-2">1,850</div>
+                    <div class="text-sm opacity-80">今日のカロリー</div>
+                    <div class="w-full bg-white bg-opacity-20 rounded-full h-2 mt-2">
+                        <div class="bg-blue-400 h-2 rounded-full" style="width: 74%"></div>
+                    </div>
+                </div>
+
+                <!-- Exercise Card -->
+                <div class="glass-effect rounded-xl p-6 card-hover">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold">運動</h3>
+                        <i class="fas fa-running text-2xl opacity-70"></i>
+                    </div>
+                    <div class="text-3xl font-bold mb-2">8,432</div>
+                    <div class="text-sm opacity-80">今日の歩数</div>
+                    <div class="w-full bg-white bg-opacity-20 rounded-full h-2 mt-2">
+                        <div class="bg-orange-400 h-2 rounded-full" style="width: 84%"></div>
+                    </div>
+                </div>
+
+                <!-- Tasks Card -->
+                <div class="glass-effect rounded-xl p-6 card-hover">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold">タスク</h3>
+                        <i class="fas fa-check-circle text-2xl opacity-70"></i>
+                    </div>
+                    <div class="text-3xl font-bold mb-2">12/18</div>
+                    <div class="text-sm opacity-80">完了タスク</div>
+                    <div class="w-full bg-white bg-opacity-20 rounded-full h-2 mt-2">
+                        <div class="bg-purple-400 h-2 rounded-full" style="width: 67%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Stats -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="glass-effect rounded-xl p-6">
+                    <h3 class="text-xl font-semibold mb-4">今日のサマリー</h3>
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center">
+                            <span>睡眠スコア</span>
+                            <span class="font-bold">85/100</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span>栄養バランス</span>
+                            <span class="font-bold">良好</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span>活動レベル</span>
+                            <span class="font-bold">高</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span>生産性</span>
+                            <span class="font-bold">92%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-effect rounded-xl p-6">
+                    <h3 class="text-xl font-semibold mb-4">AIアドバイス</h3>
+                    <div class="space-y-3 text-sm">
+                        <div class="flex items-start">
+                            <i class="fas fa-lightbulb text-yellow-400 mt-1 mr-3"></i>
+                            <p>今日の睡眠は良好ですが、深い睡眠の割合を増やすために就寝1時間前のスマホ使用を避けましょう。</p>
+                        </div>
+                        <div class="flex items-start">
+                            <i class="fas fa-info-circle text-blue-400 mt-1 mr-3"></i>
+                            <p>タンパク質摂取が少し不足しています。夕食に魚や豆腐を追加することをお勧めします。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sleep Tab -->
+        <div id="sleep" class="tab-content hidden">
+            <div class="glass-effect rounded-xl p-6 mb-6">
+                <h2 class="text-2xl font-bold mb-6">睡眠管理</h2>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Sleep Input -->
+                    <div>
+                        <h3 class="text-xl font-semibold mb-4">睡眠データ入力</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium mb-2">就寝時間</label>
+                                <input type="time" id="bedtime" class="w-full px-4 py-2 rounded-lg bg-white bg-opacity-20 border border-white border-opacity-30 focus:outline-none focus:border-opacity-60">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">起床時間</label>
+                                <input type="time" id="waketime" class="w-full px-4 py-2 rounded-lg bg-white bg-opacity-20 border border-white border-opacity-30 focus:outline-none focus:border-opacity-60">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">睡眠品質 (%)</label>
+                                <input type="range" id="sleep-quality" min="0" max="100" value="85" class="w-full" oninput="updateSleepQuality(this.value)">
+                                <div class="text-center mt-2"><span id="quality-value">85</span>%</div>
+                            </div>
+                            <button onclick="saveSleepData()" class="w-full py-3 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg font-semibold hover:opacity-90 transition">
+                                睡眠データを保存
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Sleep Analysis -->
+                    <div>
+                        <h3 class="text-xl font-semibold mb-4">睡眠分析</h3>
+                        <div class="space-y-4">
+                            <div class="flex justify-between items-center p-4 bg-white bg-opacity-10 rounded-lg">
+                                <span>総睡眠時間</span>
+                                <span class="font-bold text-xl" id="total-sleep">7.5時間</span>
+                            </div>
+                            <div class="flex justify-between items-center p-4 bg-white bg-opacity-10 rounded-lg">
+                                <span>深い睡眠</span>
+                                <span class="font-bold text-xl">1.8時間 (24%)</span>
+                            </div>
+                            <div class="flex justify-between items-center p-4 bg-white bg-opacity-10 rounded-lg">
+                                <span>浅い睡眠</span>
+                                <span class="font-bold text-xl">4.5時間 (60%)</span>
+                            </div>
+                            <div class="flex justify-between items-center p-4 bg-white bg-opacity-10 rounded-lg">
+                                <span>REM睡眠</span>
+                                <span class="font-bold text-xl">1.2時間 (16%)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sleep Chart -->
+                <div class="mt-6">
+                    <h3 class="text-xl font-semibold mb-4">週間睡眠トレンド</h3>
+                    <div class="bg-white bg-opacity-10 rounded-lg p-4" style="height: 300px;">
+                        <canvas id="sleep-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Meal Tab -->
+        <div id="meal" class="tab-content hidden">
+            <div class="glass-effect rounded-xl p-6 mb-6">
+                <h2 class="text-2xl font-bold mb-6">食事管理</h2>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Meal Input -->
+                    <div>
+                        <h3 class="text-xl font-semibold mb-4">食事記録</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium mb-2">食事名</label>
+                                <input type="text" id="meal-name" placeholder="例：鶏肉のグリルサラダ" class="w-full px-4 py-2 rounded-lg bg-white bg-opacity-20 border border-white border-opacity-30 focus:outline-none focus:border-opacity-60">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">食事タイプ</label>
+                                <select id="meal-type" class="w-full px-4 py-2 rounded-lg bg-white bg-opacity-20 border border-white border-opacity-30 focus:outline-none focus:border-opacity-60">
+                                    <option value="breakfast">朝食</option>
+                                    <option value="lunch">昼食</option>
+                                    <option value="dinner">夕食</option>
+                                    <option value="snack">間食</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">写真を撮影</label>
+                                <input type="file" id="meal-photo" accept="image/*" capture="camera" class="w-full px-4 py-2 rounded-lg bg-white bg-opacity-20 border border-white border-opacity-30 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-white file:bg-opacity-20 file:hover:bg-opacity-30">
+                            </div>
+                            <button onclick="analyzeMeal()" class="w-full py-3 bg-gradient-to-r from-green-500 to-teal-600 rounded-lg font-semibold hover:opacity-90 transition">
+                                栄養を分析
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Nutrition Results -->
+                    <div>
+                        <h3 class="text-xl font-semibold mb-4">栄養分析結果</h3>
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center p-3 bg-white bg-opacity-10 rounded-lg">
+                                <span>カロリー</span>
+                                <span class="font-bold" id="calories">0 kcal</span>
+                            </div>
+                            <div class="flex justify-between items-center p-3 bg-white bg-opacity-10 rounded-lg">
+                                <span>炭水化物</span>
+                                <span class="font-bold" id="carbs">0 g</span>
+                            </div>
+                            <div class="flex justify-between items-center p-3 bg-white bg-opacity-10 rounded-lg">
+                                <span>タンパク質</span>
+                                <span class="font-bold" id="protein">0 g</span>
+                            </div>
+                            <div class="flex justify-between items-center p-3 bg-white bg-opacity-10 rounded-lg">
+                                <span>脂質</span>
+                                <span class="font-bold" id="fat">0 g</span>
+                            </div>
+                            <div class="flex justify-between items-center p-3 bg-white bg-opacity-10 rounded-lg">
+                                <span>食物繊維</span>
+                                <span class="font-bold" id="fiber">0 g</span>
+                            </div>
+                            <div class="flex justify-between items-center p-3 bg-white bg-opacity-10 rounded-lg">
+                                <span>カルシウム</span>
+                                <span class="font-bold" id="calcium">0 mg</span>
+                            </div>
+                            <div class="flex justify-between items-center p-3 bg-white bg-opacity-10 rounded-lg">
+                                <span>水分摂取</span>
+                                <span class="font-bold" id="water">0 ml</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI Nutrition Advisor -->
+                <div class="mt-6">
+                    <h3 class="text-xl font-semibold mb-4">AI栄養アドバイザー</h3>
+                    <div class="bg-white bg-opacity-10 rounded-lg p-4">
+                        <div id="nutrition-advice" class="space-y-3">
+                            <p class="text-sm opacity-80">食事を記録すると、栄養バランスに関するパーソナライズされたアドバイスが表示されます。</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Today's Meals -->
+                <div class="mt-6">
+                    <h3 class="text-xl font-semibold mb-4">今日の食事</h3>
+                    <div id="todays-meals" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <!-- Meals will be added here dynamically -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Exercise Tab -->
+        <div id="exercise" class="tab-content hidden">
+            <div class="glass-effect rounded-xl p-6 mb-6">
+                <h2 class="text-2xl font-bold mb-6">運動管理</h2>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Exercise Input -->
+                    <div>
+                        <h3 class="text-xl font-semibold mb-4">運動データ入力</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium mb-2">歩数</label>
+                                <input type="number" id="steps" placeholder="例：10000" class="w-full px-4 py-2 rounded-lg bg-white bg-opacity-20 border border-white border-opacity-30 focus:outline-none focus:border-opacity-60">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">消費カロリー</label>
+                                <input type="number" id="calories-burned" placeholder="例：350" class="w-full px-4 py-2 rounded-lg bg-white bg-opacity-20 border border-white border-opacity-30 focus:outline-none focus:border-opacity-60">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">移動距離 (km)</label>
+                                <input type="number" id="distance" step="0.1" placeholder="例：7.2" class="w-full px-4 py-2 rounded-lg bg-white bg-opacity-20 border border-white border-opacity-30 focus:outline-none focus:border-opacity-60">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">運動時間 (分)</label>
+                                <input type="number" id="exercise-time" placeholder="例：45" class="w-full px-4 py-2 rounded-lg bg-white bg-opacity-20 border border-white border-opacity-30 focus:outline-none focus:border-opacity-60">
+                            </div>
+                            <button onclick="saveExerciseData()" class="w-full py-3 bg-gradient-to-r from-orange-500 to-red-600 rounded-lg font-semibold hover:opacity-90 transition">
+                                運動データを保存
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Exercise Stats -->
+                    <div>
+                        <h3 class="text-xl font-semibold mb-4">今日の運動実績</h3>
+                        <div class="space-y-4">
+                            <div class="flex justify-between items-center p-4 bg-white bg-opacity-10 rounded-lg">
+                                <span>目標達成率</span>
+                                <span class="font-bold text-xl" id="achievement-rate">84%</span>
+                            </div>
+                            <div class="flex justify-between items-center p-4 bg-white bg-opacity-10 rounded-lg">
+                                <span>アクティブ時間</span>
+                                <span class="font-bold text-xl" id="active-time">45分</span>
+                            </div>
+                            <div class="flex justify-between items-center p-4 bg-white bg-opacity-10 rounded-lg">
+                                <span>平均心拍数</span>
+                                <span class="font-bold text-xl">72 bpm</span>
+                            </div>
+                            <div class="flex justify-between items-center p-4 bg-white bg-opacity-10 rounded-lg">
+                                <span>運動強度</span>
+                                <span class="font-bold text-xl">中程度</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Exercise Chart -->
+                <div class="mt-6">
+                    <h3 class="text-xl font-semibold mb-4">週間運動トレンド</h3>
+                    <div class="bg-white bg-opacity-10 rounded-lg p-4" style="height: 300px;">
+                        <canvas id="exercise-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tasks Tab -->
+        <div id="tasks" class="tab-content hidden">
+            <div class="glass-effect rounded-xl p-6 mb-6">
+                <h2 class="text-2xl font-bold mb-6">タスク管理</h2>
+                
+                <div class="mb-6">
+                    <div class="flex gap-4">
+                        <input type="text" id="new-task" placeholder="新しいタスクを追加..." class="flex-1 px-4 py-2 rounded-lg bg-white bg-opacity-20 border border-white border-opacity-30 focus:outline-none focus:border-opacity-60">
+                        <select id="task-priority" class="px-4 py-2 rounded-lg bg-white bg-opacity-20 border border-white border-opacity-30 focus:outline-none focus:border-opacity-60">
+                            <option value="low">低</option>
+                            <option value="medium">中</option>
+                            <option value="high">高</option>
+                        </select>
+                        <button onclick="addTask()" class="px-6 py-2 bg-gradient-to-r from-purple-500 to-pink-600 rounded-lg font-semibold hover:opacity-90 transition">
+                            追加
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Todo Column -->
+                    <div>
+                        <h3 class="text-xl font-semibold mb-4">未着手</h3>
+                        <div id="todo-column" class="space-y-3">
+                            <!-- Tasks will be added here -->
+                        </div>
+                    </div>
+
+                    <!-- In Progress Column -->
+                    <div>
+                        <h3 class="text-xl font-semibold mb-4">進行中</h3>
+                        <div id="progress-column" class="space-y-3">
+                            <!-- Tasks will be added here -->
+                        </div>
+                    </div>
+
+                    <!-- Done Column -->
+                    <div>
+                        <h3 class="text-xl font-semibold mb-4">完了</h3>
+                        <div id="done-column" class="space-y-3">
+                            <!-- Tasks will be added here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- News Tab -->
+        <div id="news" class="tab-content hidden">
+            <div class="glass-effect rounded-xl p-6 mb-6">
+                <h2 class="text-2xl font-bold mb-6">AIニュース</h2>
+                
+                <div class="mb-4">
+                    <button onclick="refreshNews()" class="px-6 py-2 bg-gradient-to-r from-blue-500 to-cyan-600 rounded-lg font-semibold hover:opacity-90 transition">
+                        <i class="fas fa-sync-alt mr-2"></i>ニュースを更新
+                    </button>
+                </div>
+
+                <div id="news-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- News articles will be loaded here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Logs Tab -->
+        <div id="logs" class="tab-content hidden">
+            <div class="glass-effect rounded-xl p-6 mb-6">
+                <h2 class="text-2xl font-bold mb-6">データログ</h2>
+                
+                <div class="mb-6">
+                    <div class="flex gap-4">
+                        <button onclick="showLogPeriod('day')" class="log-period-btn px-4 py-2 rounded-lg bg-white bg-opacity-20 hover:bg-opacity-30 transition" data-period="day">日</button>
+                        <button onclick="showLogPeriod('week')" class="log-period-btn px-4 py-2 rounded-lg bg-white bg-opacity-20 hover:bg-opacity-30 transition" data-period="week">週</button>
+                        <button onclick="showLogPeriod('month')" class="log-period-btn px-4 py-2 rounded-lg bg-white bg-opacity-20 hover:bg-opacity-30 transition" data-period="month">月</button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Sleep Log -->
+                    <div>
+                        <h3 class="text-xl font-semibold mb-4">睡眠ログ</h3>
+                        <div class="bg-white bg-opacity-10 rounded-lg p-4">
+                            <div id="sleep-log" class="space-y-2">
+                                <!-- Sleep logs will be displayed here -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Nutrition Log -->
+                    <div>
+                        <h3 class="text-xl font-semibold mb-4">栄養ログ</h3>
+                        <div class="bg-white bg-opacity-10 rounded-lg p-4">
+                            <div id="nutrition-log" class="space-y-2">
+                                <!-- Nutrition logs will be displayed here -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Exercise Log -->
+                    <div>
+                        <h3 class="text-xl font-semibold mb-4">運動ログ</h3>
+                        <div class="bg-white bg-opacity-10 rounded-lg p-4">
+                            <div id="exercise-log" class="space-y-2">
+                                <!-- Exercise logs will be displayed here -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Productivity Log -->
+                    <div>
+                        <h3 class="text-xl font-semibold mb-4">生産性ログ</h3>
+                        <div class="bg-white bg-opacity-10 rounded-lg p-4">
+                            <div id="productivity-log" class="space-y-2">
+                                <!-- Productivity logs will be displayed here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
