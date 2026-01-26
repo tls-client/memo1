@@ -127,14 +127,9 @@ function saveSleepData() {
 
 function updateSleepAnalysis(sleepEntry) {
     document.getElementById('total-sleep').textContent = sleepEntry.totalHours + '時間';
-    document.querySelector('.space-y-4 .font-bold.text-xl').textContent = sleepEntry.deepSleep + '時間 (' + Math.round((sleepEntry.deepSleep / sleepEntry.totalHours) * 100) + '%)';
-    const sleepAnalysisItems = document.querySelectorAll('.space-y-4 .font-bold.text-xl');
-    if (sleepAnalysisItems[1]) {
-        sleepAnalysisItems[1].textContent = sleepEntry.lightSleep + '時間 (' + Math.round((sleepEntry.lightSleep / sleepEntry.totalHours) * 100) + '%)';
-    }
-    if (sleepAnalysisItems[2]) {
-        sleepAnalysisItems[2].textContent = sleepEntry.remSleep + '時間 (' + Math.round((sleepEntry.remSleep / sleepEntry.totalHours) * 100) + '%)';
-    }
+    document.getElementById('deep-sleep').textContent = sleepEntry.deepSleep + '時間 (' + Math.round((sleepEntry.deepSleep / sleepEntry.totalHours) * 100) + '%)';
+    document.getElementById('light-sleep').textContent = sleepEntry.lightSleep + '時間 (' + Math.round((sleepEntry.lightSleep / sleepEntry.totalHours) * 100) + '%)';
+    document.getElementById('rem-sleep').textContent = sleepEntry.remSleep + '時間 (' + Math.round((sleepEntry.remSleep / sleepEntry.totalHours) * 100) + '%)';
 }
 
 function calculateSleepHours(bedtime, waketime) {
@@ -823,16 +818,16 @@ function calculateSleepQuality(sleepEntry) {
 }
 
 function initializeCharts() {
-    // Sleep chart
+    // Sleep chart - initialize with empty data
     const sleepCtx = document.getElementById('sleep-chart');
     if (sleepCtx) {
-        new Chart(sleepCtx, {
+        window.sleepChart = new Chart(sleepCtx, {
             type: 'line',
             data: {
                 labels: ['月', '火', '水', '木', '金', '土', '日'],
                 datasets: [{
                     label: '睡眠時間',
-                    data: [7.5, 6.8, 8.2, 7.0, 7.5, 9.0, 8.5],
+                    data: [0, 0, 0, 0, 0, 0, 0],
                     borderColor: 'rgb(75, 192, 192)',
                     backgroundColor: 'rgba(75, 192, 192, 0.2)',
                     tension: 0.4
@@ -871,16 +866,16 @@ function initializeCharts() {
         });
     }
     
-    // Exercise chart
+    // Exercise chart - initialize with empty data
     const exerciseCtx = document.getElementById('exercise-chart');
     if (exerciseCtx) {
-        new Chart(exerciseCtx, {
+        window.exerciseChart = new Chart(exerciseCtx, {
             type: 'bar',
             data: {
                 labels: ['月', '火', '水', '木', '金', '土', '日'],
                 datasets: [{
                     label: '歩数',
-                    data: [8000, 12000, 6000, 10000, 8432, 15000, 11000],
+                    data: [0, 0, 0, 0, 0, 0, 0],
                     backgroundColor: 'rgba(255, 159, 64, 0.8)'
                 }]
             },
