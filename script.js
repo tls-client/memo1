@@ -72,26 +72,69 @@ function updateSleepQuality(value) {
 function saveSleepData() {
     const bedtime = document.getElementById('bedtime').value;
     const waketime = document.getElementById('waketime').value;
-    const quality = document.getElementById('sleep-quality').value;
+    const sleepType = document.getElementById('sleep-type').value;
     
     if (!bedtime || !waketime) {
         showNotification('就寝時間と起床時間を入力してください', 'error');
         return;
     }
     
+    const totalHours = calculateSleepHours(bedtime, waketime);
+    
+    // Estimate sleep stages based on sleep type
+    let deepSleep, lightSleep, remSleep;
+    
+    switch(sleepType) {
+        case 'deep':
+            deepSleep = (totalHours * 0.3).toFixed(1);
+            lightSleep = (totalHours * 0.5).toFixed(1);
+            remSleep = (totalHours * 0.2).toFixed(1);
+            break;
+        case 'light':
+            deepSleep = (totalHours * 0.15).toFixed(1);
+            lightSleep = (totalHours * 0.65).toFixed(1);
+            remSleep = (totalHours * 0.2).toFixed(1);
+            break;
+        case 'interrupted':
+            deepSleep = (totalHours * 0.1).toFixed(1);
+            lightSleep = (totalHours * 0.6).toFixed(1);
+            remSleep = (totalHours * 0.15).toFixed(1);
+            break;
+        default: // normal
+            deepSleep = (totalHours * 0.2).toFixed(1);
+            lightSleep = (totalHours * 0.55).toFixed(1);
+            remSleep = (totalHours * 0.25).toFixed(1);
+    }
+    
     const sleepEntry = {
         date: new Date().toISOString(),
         bedtime: bedtime,
         waketime: waketime,
-        quality: quality,
-        totalHours: calculateSleepHours(bedtime, waketime)
+        sleepType: sleepType,
+        totalHours: totalHours,
+        deepSleep: deepSleep,
+        lightSleep: lightSleep,
+        remSleep: remSleep
     };
     
     sleepData.push(sleepEntry);
     saveToLocalStorage();
+    updateSleepAnalysis(sleepEntry);
     updateSleepChart();
     updateDashboardStats();
     showNotification('睡眠データを保存しました', 'success');
+}
+
+function updateSleepAnalysis(sleepEntry) {
+    document.getElementById('total-sleep').textContent = sleepEntry.totalHours + '時間';
+    document.querySelector('.space-y-4 .font-bold.text-xl').textContent = sleepEntry.deepSleep + '時間 (' + Math.round((sleepEntry.deepSleep / sleepEntry.totalHours) * 100) + '%)';
+    const sleepAnalysisItems = document.querySelectorAll('.space-y-4 .font-bold.text-xl');
+    if (sleepAnalysisItems[1]) {
+        sleepAnalysisItems[1].textContent = sleepEntry.lightSleep + '時間 (' + Math.round((sleepEntry.lightSleep / sleepEntry.totalHours) * 100) + '%)';
+    }
+    if (sleepAnalysisItems[2]) {
+        sleepAnalysisItems[2].textContent = sleepEntry.remSleep + '時間 (' + Math.round((sleepEntry.remSleep / sleepEntry.totalHours) * 100) + '%)';
+    }
 }
 
 function calculateSleepHours(bedtime, waketime) {
@@ -125,6 +168,8 @@ function analyzeMeal() {
     document.getElementById('fat').textContent = nutrition.fat + ' g';
     document.getElementById('fiber').textContent = nutrition.fiber + ' g';
     document.getElementById('calcium').textContent = nutrition.calcium + ' mg';
+    document.getElementById('vitamins').textContent = nutrition.vitamins + ' mg';
+    document.getElementById('minerals').textContent = nutrition.minerals + ' mg';
     document.getElementById('water').textContent = nutrition.water + ' ml';
     
     // Save nutrition data
@@ -156,6 +201,8 @@ function simulateNutritionAnalysis(mealName) {
         fat: Math.floor(Math.random() * 30) + 5,
         fiber: Math.floor(Math.random() * 15) + 2,
         calcium: Math.floor(Math.random() * 200) + 50,
+        vitamins: Math.floor(Math.random() * 100) + 20,
+        minerals: Math.floor(Math.random() * 80) + 15,
         water: Math.floor(Math.random() * 300) + 100
     };
     
@@ -250,9 +297,9 @@ function updateTodaysMeals() {
 
 function getMealTypeLabel(type) {
     const labels = {
-        breakfast: '朝食',
-        lunch: '昼食',
-        dinner: '夕食',
+        morning: '朝',
+        noon: '昼',
+        night: '夜',
         snack: '間食'
     };
     return labels[type] || type;
@@ -568,15 +615,15 @@ function updateDashboardStats() {
     );
     
     const sleepHours = todaySleep ? todaySleep.totalHours : '--';
-    const sleepQuality = todaySleep ? todaySleep.quality : '--';
     
     // Update sleep card
     const sleepCard = document.querySelector('.grid .glass-effect');
     if (sleepCard && todaySleep) {
         sleepCard.querySelector('.text-3xl').textContent = sleepHours + 'h';
-        sleepCard.querySelector('.text-sm.opacity-80').textContent = `睡眠品質: ${sleepQuality}%`;
+        sleepCard.querySelector('.text-sm.opacity-80').textContent = `睡眠タイプ: ${getSleepTypeLabel(todaySleep.sleepType)}`;
         const progressBar = sleepCard.querySelector('.bg-green-400');
         if (progressBar) {
+            const sleepQuality = calculateSleepQuality(todaySleep);
             progressBar.style.width = sleepQuality + '%';
         }
     }
@@ -635,7 +682,12 @@ function updateDashboardStats() {
     if (summarySection) {
         const summaryItems = summarySection.querySelectorAll('.flex');
         if (summaryItems[0]) {
-            summaryItems[0].querySelector('.font-bold').textContent = todaySleep ? `${sleepQuality}/100` : '--/100';
+            const sleepScore = todaySleep ? calculateSleepQuality(todaySleep) : '--';
+            summaryItems[0].querySelector('.font-bold').textContent = sleepScore + '/100';
+        }
+        if (summaryItems[1]) {
+            const nutritionBalance = todayNutrition.length > 0 ? '良好' : '--';
+            summaryItems[1].querySelector('.font-bold').textContent = nutritionBalance;
         }
         if (summaryItems[2]) {
             const activityLevel = todayExercise ? 
@@ -647,6 +699,45 @@ function updateDashboardStats() {
             summaryItems[3].querySelector('.font-bold').textContent = productivity + '%';
         }
     }
+}
+
+function getSleepTypeLabel(type) {
+    const labels = {
+        normal: '普通',
+        deep: '深い眠り',
+        light: '浅い眠り',
+        interrupted: '途中で起きた'
+    };
+    return labels[type] || type;
+}
+
+function calculateSleepQuality(sleepEntry) {
+    // Calculate quality based on sleep type and duration
+    let baseQuality = 70;
+    
+    switch(sleepEntry.sleepType) {
+        case 'deep':
+            baseQuality = 90;
+            break;
+        case 'light':
+            baseQuality = 60;
+            break;
+        case 'interrupted':
+            baseQuality = 40;
+            break;
+        default:
+            baseQuality = 70;
+    }
+    
+    // Adjust based on duration (ideal is 7-9 hours)
+    const hours = parseFloat(sleepEntry.totalHours);
+    if (hours >= 7 && hours <= 9) {
+        baseQuality += 10;
+    } else if (hours < 6 || hours > 10) {
+        baseQuality -= 20;
+    }
+    
+    return Math.max(0, Math.min(100, baseQuality));
 }
 
 function initializeCharts() {
@@ -746,8 +837,78 @@ function initializeCharts() {
 }
 
 function updateSleepChart() {
-    // Update sleep chart with real data
-    // This would update the chart with actual sleep data
+    const sleepCtx = document.getElementById('sleep-chart');
+    if (!sleepCtx) return;
+    
+    // Get last 7 days of sleep data
+    const last7Days = [];
+    const today = new Date();
+    
+    for (let i = 6; i >= 0; i--) {
+        const date = new Date(today);
+        date.setDate(date.getDate() - i);
+        const dateStr = date.toDateString();
+        
+        const dayData = sleepData.find(sleep => 
+            new Date(sleep.date).toDateString() === dateStr
+        );
+        
+        last7Days.push({
+            date: date.toLocaleDateString('ja-JP', { weekday: 'short' }),
+            hours: dayData ? parseFloat(dayData.totalHours) : 0
+        });
+    }
+    
+    // Update chart data
+    if (window.sleepChart) {
+        window.sleepChart.data.labels = last7Days.map(d => d.date);
+        window.sleepChart.data.datasets[0].data = last7Days.map(d => d.hours);
+        window.sleepChart.update();
+    } else {
+        window.sleepChart = new Chart(sleepCtx, {
+            type: 'line',
+            data: {
+                labels: last7Days.map(d => d.date),
+                datasets: [{
+                    label: '睡眠時間',
+                    data: last7Days.map(d => d.hours),
+                    borderColor: 'rgb(75, 192, 192)',
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: 'white'
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            color: 'white'
+                        },
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            color: 'white'
+                        },
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        }
+                    }
+                }
+            }
+        });
+    }
 }
 
 function updateExerciseChart() {

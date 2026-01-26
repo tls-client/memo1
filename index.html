@@ -174,18 +174,22 @@
                         <div class="space-y-4">
                             <div>
                                 <label class="block text-sm font-medium mb-2">就寝時間</label>
-                                <input type="time" id="bedtime" class="w-full px-4 py-2 rounded-lg bg-white bg-opacity-20 border border-white border-opacity-30 focus:outline-none focus:border-opacity-60">
+                                <input type="time" id="bedtime" class="w-full px-4 py-3 rounded-lg bg-white bg-opacity-20 border border-white border-opacity-30 focus:outline-none focus:border-opacity-60 text-lg">
                             </div>
                             <div>
                                 <label class="block text-sm font-medium mb-2">起床時間</label>
-                                <input type="time" id="waketime" class="w-full px-4 py-2 rounded-lg bg-white bg-opacity-20 border border-white border-opacity-30 focus:outline-none focus:border-opacity-60">
+                                <input type="time" id="waketime" class="w-full px-4 py-3 rounded-lg bg-white bg-opacity-20 border border-white border-opacity-30 focus:outline-none focus:border-opacity-60 text-lg">
                             </div>
                             <div>
-                                <label class="block text-sm font-medium mb-2">睡眠品質 (%)</label>
-                                <input type="range" id="sleep-quality" min="0" max="100" value="85" class="w-full" oninput="updateSleepQuality(this.value)">
-                                <div class="text-center mt-2"><span id="quality-value">85</span>%</div>
+                                <label class="block text-sm font-medium mb-2">睡眠タイプ</label>
+                                <select id="sleep-type" class="w-full px-4 py-3 rounded-lg bg-white bg-opacity-20 border border-white border-opacity-30 focus:outline-none focus:border-opacity-60 text-lg">
+                                    <option value="normal">普通</option>
+                                    <option value="deep">深い眠り</option>
+                                    <option value="light">浅い眠り</option>
+                                    <option value="interrupted">途中で起きた</option>
+                                </select>
                             </div>
-                            <button onclick="saveSleepData()" class="w-full py-3 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg font-semibold hover:opacity-90 transition">
+                            <button onclick="saveSleepData()" class="w-full py-3 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg font-semibold hover:opacity-90 transition text-lg">
                                 睡眠データを保存
                             </button>
                         </div>
@@ -242,9 +246,9 @@
                             <div>
                                 <label class="block text-sm font-medium mb-2">食事タイプ</label>
                                 <select id="meal-type" class="w-full px-4 py-2 rounded-lg bg-white bg-opacity-20 border border-white border-opacity-30 focus:outline-none focus:border-opacity-60">
-                                    <option value="breakfast">朝食</option>
-                                    <option value="lunch">昼食</option>
-                                    <option value="dinner">夕食</option>
+                                    <option value="morning">朝</option>
+                                    <option value="noon">昼</option>
+                                    <option value="night">夜</option>
                                     <option value="snack">間食</option>
                                 </select>
                             </div>
@@ -285,6 +289,14 @@
                             <div class="flex justify-between items-center p-3 bg-white bg-opacity-10 rounded-lg">
                                 <span>カルシウム</span>
                                 <span class="font-bold" id="calcium">0 mg</span>
+                            </div>
+                            <div class="flex justify-between items-center p-3 bg-white bg-opacity-10 rounded-lg">
+                                <span>ビタミン</span>
+                                <span class="font-bold" id="vitamins">0 mg</span>
+                            </div>
+                            <div class="flex justify-between items-center p-3 bg-white bg-opacity-10 rounded-lg">
+                                <span>ミネラル</span>
+                                <span class="font-bold" id="minerals">0 mg</span>
                             </div>
                             <div class="flex justify-between items-center p-3 bg-white bg-opacity-10 rounded-lg">
                                 <span>水分摂取</span>
