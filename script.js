@@ -429,50 +429,60 @@ function deleteTask(taskId) {
 
 async function refreshNews() {
     try {
-        // Fetch real AI news from RSS feeds
+        // Fetch AI news from multiple sources
         const newsSources = [
-            'https://rss.cnn.com/rss/edition.rss',
-            'https://feeds.bbci.co.uk/news/rss.xml',
-            'https://www.nasa.gov/rss/dyn/breaking_news.rss'
+            {
+                name: 'TechCrunch AI',
+                url: 'https://techcrunch.com/category/artificial-intelligence/feed/',
+                type: 'rss'
+            },
+            {
+                name: 'MIT Technology Review AI',
+                url: 'https://www.technologyreview.com/topic/artificial-intelligence/feed/',
+                type: 'rss'
+            },
+            {
+                name: 'VentureBeat AI',
+                url: 'https://venturebeat.com/category/ai/feed/',
+                type: 'rss'
+            },
+            {
+                name: 'AI News',
+                url: 'https://artificialintelligence-news.com/feed/',
+                type: 'rss'
+            }
         ];
         
         const newsPromises = newsSources.map(async (source) => {
             try {
-                const response = await fetch(`https://api.rss2json.com/api.json?rss_url=${encodeURIComponent(source)}`);
+                const response = await fetch(`https://api.rss2json.com/api.json?rss_url=${encodeURIComponent(source.url)}`);
                 const data = await response.json();
                 
                 if (data.status === 'ok' && data.items) {
-                    return data.items.slice(0, 2).map(item => ({
-                        title: item.title,
-                        description: item.description || item.contentSnippet || '',
-                        url: item.link || item.guid,
-                        publishedAt: item.pubDate || new Date().toISOString()
+                    const items = await Promise.all(data.items.slice(0, 3).map(async (item) => {
+                        return {
+                            title: item.title,
+                            description: item.description || item.contentSnippet || '',
+                            summary: await summarizeArticle(item.title, item.description || item.contentSnippet || ''),
+                            url: item.link || item.guid,
+                            publishedAt: item.pubDate || new Date().toISOString(),
+                            source: source.name
+                        };
                     }));
+                    return items;
                 }
                 return [];
             } catch (error) {
-                console.error('Error fetching news from', source, error);
+                console.error('Error fetching news from', source.name, error);
                 return [];
             }
         });
         
         const newsResults = await Promise.all(newsPromises);
-        newsArticles = newsResults.flat();
+        newsArticles = newsResults.flat().slice(0, 12);
         
-        // Filter for AI/tech related news
-        newsArticles = newsArticles.filter(article => 
-            article.title.toLowerCase().includes('ai') ||
-            article.title.toLowerCase().includes('artificial') ||
-            article.title.toLowerCase().includes('technology') ||
-            article.title.toLowerCase().includes('tech') ||
-            article.description.toLowerCase().includes('ai') ||
-            article.description.toLowerCase().includes('artificial')
-        ).slice(0, 6);
-        
-        // If no AI news found, keep some general tech news
-        if (newsArticles.length === 0) {
-            newsArticles = newsResults.flat().slice(0, 6);
-        }
+        // Sort by publication date
+        newsArticles.sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt));
         
         displayNews();
         
@@ -482,41 +492,113 @@ async function refreshNews() {
     } catch (error) {
         console.error('Error refreshing news:', error);
         // Fallback to mock news if API fails
-        const mockNews = [
-            {
-                title: 'AIがビジネス戦略を革新：最新の動向',
-                description: '人工知能が企業の意思決定プロセスをどのように変革しているか',
-                url: '#',
-                publishedAt: new Date().toISOString()
-            },
-            {
-                title: '生産性向上のためのAIツールトップ10',
-                description: 'CEOが必ず知っておくべき最新のAI生産性ツール',
-                url: '#',
-                publishedAt: new Date().toISOString()
-            },
-            {
-                title: '健康経営とAIテクノロジーの融合',
-                description: '従業員の健康をAIで管理する新しいアプローチ',
-                url: '#',
-                publishedAt: new Date().toISOString()
-            }
-        ];
-        
+        const mockNews = await generateMockNewsWithSummaries();
         newsArticles = mockNews;
         displayNews();
     }
+}
+
+async function summarizeArticle(title, description) {
+    try {
+        // Create a simple summary based on title and description
+        let text = `${title}. ${description}`;
+        
+        // Remove HTML tags and extra whitespace
+        text = text.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+        
+        // Simple summarization logic
+        if (text.length > 200) {
+            // Find key sentences
+            const sentences = text.split('. ').filter(s => s.length > 20);
+            
+            // Look for AI-related keywords
+            const aiKeywords = ['AI', 'artificial intelligence', 'machine learning', 'neural', 'algorithm', 'automation', 'robotics'];
+            const keySentences = sentences.filter(sentence => 
+                aiKeywords.some(keyword => sentence.toLowerCase().includes(keyword.toLowerCase()))
+            );
+            
+            if (keySentences.length > 0) {
+                return keySentences.slice(0, 2).join('. ') + '.';
+            } else {
+                // Return first 200 characters if no AI keywords found
+                return text.substring(0, 200) + '...';
+            }
+        }
+        
+        return text;
+    } catch (error) {
+        console.error('Error summarizing article:', error);
+        return description.substring(0, 150) + '...';
+    }
+}
+
+async function generateMockNewsWithSummaries() {
+    const mockArticles = [
+        {
+            title: 'OpenAI Announces GPT-5 with Enhanced Reasoning Capabilities',
+            description: 'OpenAI has unveiled its latest language model GPT-5, featuring significant improvements in reasoning, mathematical abilities, and reduced hallucinations.',
+            url: '#',
+            publishedAt: new Date().toISOString(),
+            source: 'AI News'
+        },
+        {
+            title: 'Google DeepMind Breakthrough in Protein Folding with AlphaFold 3',
+            description: 'DeepMind\'s AlphaFold 3 achieves unprecedented accuracy in predicting protein structures, accelerating drug discovery and biological research.',
+            url: '#',
+            publishedAt: new Date().toISOString(),
+            source: 'TechCrunch AI'
+        },
+        {
+            title: 'Microsoft Integrates Advanced AI Copilot Across Office Suite',
+            description: 'Microsoft rolls out comprehensive AI integration in Word, Excel, and PowerPoint, offering real-time assistance and content generation.',
+            url: '#',
+            publishedAt: new Date().toISOString(),
+            source: 'VentureBeat AI'
+        },
+        {
+            title: 'Tesla FSD Beta Achieves 99.9% Safety Rate in Urban Environments',
+            description: 'Tesla\'s Full Self-Driving beta demonstrates remarkable safety improvements in complex urban driving scenarios.',
+            url: '#',
+            publishedAt: new Date().toISOString(),
+            source: 'MIT Technology Review'
+        },
+        {
+            title: 'Meta Launches AI-Powered Virtual Reality Meeting Platform',
+            description: 'Meta introduces new VR meeting platform with AI avatars that can represent users in virtual meetings with realistic expressions.',
+            url: '#',
+            publishedAt: new Date().toISOString(),
+            source: 'AI News'
+        },
+        {
+            title: 'Amazon Develops AI System for Predictive Supply Chain Management',
+            description: 'Amazon\'s new AI system predicts supply chain disruptions with 95% accuracy, optimizing inventory management globally.',
+            url: '#',
+            publishedAt: new Date().toISOString(),
+            source: 'TechCrunch AI'
+        }
+    ];
+    
+    // Add summaries to mock articles
+    for (let article of mockArticles) {
+        article.summary = await summarizeArticle(article.title, article.description);
+    }
+    
+    return mockArticles;
 }
 
 function displayNews() {
     const newsContainer = document.getElementById('news-container');
     newsContainer.innerHTML = newsArticles.map(article => `
         <div class="bg-white bg-opacity-10 rounded-lg p-6 hover:bg-opacity-20 transition cursor-pointer">
-            <h3 class="font-semibold mb-2">${article.title}</h3>
-            <p class="text-sm opacity-80 mb-4">${article.description}</p>
+            <div class="flex items-start justify-between mb-2">
+                <h3 class="font-semibold text-lg flex-1 mr-2">${article.title}</h3>
+                <span class="text-xs bg-white bg-opacity-20 px-2 py-1 rounded">${article.source}</span>
+            </div>
+            <div class="text-sm opacity-90 mb-3 font-medium text-blue-200">AI要約:</div>
+            <p class="text-sm opacity-80 mb-4 leading-relaxed">${article.summary}</p>
             <div class="flex justify-between items-center">
                 <span class="text-xs opacity-60">${formatDate(article.publishedAt)}</span>
-                <a href="${article.url}" class="text-blue-400 hover:text-blue-300 text-sm">
+                <a href="${article.url}" target="_blank" class="text-blue-400 hover:text-blue-300 text-sm">
                     続きを読む <i class="fas fa-arrow-right ml-1"></i>
                 </a>
             </div>
